@@ -1,0 +1,2 @@
+Type image:
+	genomic interval.
