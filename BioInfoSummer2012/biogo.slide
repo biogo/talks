@@ -1,3 +1,7 @@
+# Copyright ©2012 The bíogo.talks Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
 # If using -play=true, this presentation requires:
 #  code.google.com/p/biogo.cluster
 #  code.google.com/p/biogo.cluster/kmeans
