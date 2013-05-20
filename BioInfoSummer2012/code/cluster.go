@@ -5,8 +5,7 @@
 package main
 
 import (
-	"code.google.com/p/biogo.cluster"
-	"code.google.com/p/biogo.cluster/kmeans" // @7fe3b
+	"code.google.com/p/biogo.cluster/kmeans" // @090d6
 	"fmt"
 	"strings"
 )
@@ -32,8 +31,10 @@ func (f *Feature) String() string {
 
 type Features []*Feature
 
-func (f Features) Len() int                    { return len(f) }
-func (f Features) Values(i int) (x, y float64) { return float64(f[i].Start()), float64(f[i].End()) }
+func (f Features) Len() int { return len(f) }
+func (f Features) Values(i int) []float64 {
+	return []float64{float64(f[i].Start()), float64(f[i].End())}
+}
 
 var feats = []*Feature{
 	{id: "0", start: 1, end: 1700},
@@ -52,13 +53,17 @@ var feats = []*Feature{
 // Cluster feat.Features on the basis of location where:
 //  epsilon is allowable error, and
 //  effort is number of attempts to achieve error < epsilon for any k.
-func ClusterFeatures(f []*Feature, epsilon float64, effort int) cluster.Clusterer {
-	km := kmeans.New(Features(f))
+func ClusterFeatures(f []*Feature, epsilon float64, effort int) *kmeans.Kmeans {
+	km, err := kmeans.New(Features(f))
+	if err != nil {
+		panic(err)
+	}
 
 	values := km.Values()
 	cut := make([]float64, len(values))
 	for i, v := range values {
-		l := epsilon * (v.Y() - v.X())
+		v := v.V()
+		l := epsilon * (v[1] - v[0])
 		cut[i] = l * l
 	}
 
@@ -69,7 +74,9 @@ func ClusterFeatures(f []*Feature, epsilon float64, effort int) cluster.Clustere
 			km.Cluster()
 			centers := km.Centers()
 			for i, v := range values {
-				dx, dy := centers[v.Cluster()].X()-v.X(), centers[v.Cluster()].Y()-v.Y()
+				cv := centers[v.Cluster()].V()
+				vv := v.V()
+				dx, dy := cv[0]-vv[0], cv[1]-vv[1]
 				ok := dx*dx+dy*dy < cut[i]
 				if !ok {
 					continue ATTEMPT
@@ -84,9 +91,9 @@ func ClusterFeatures(f []*Feature, epsilon float64, effort int) cluster.Clustere
 
 func main() {
 	km := ClusterFeatures(feats, 0.15, 5)
-	for ci, c := range km.Clusters() {
+	for ci, c := range km.Centers() {
 		fmt.Printf("Cluster %d:\n", ci)
-		for _, i := range c {
+		for _, i := range c.Cluster() {
 			fmt.Println(feats[i])
 		}
 		fmt.Println()
