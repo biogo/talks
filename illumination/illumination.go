@@ -7,5 +7,5 @@ package illumination
 import (
 	_ "code.google.com/p/biogo.boom"
 	_ "code.google.com/p/biogo.illumina"
-	_ "code.google.com/p/biogo.kdtree"
+	_ "code.google.com/p/biogo.store/kdtree"
 )

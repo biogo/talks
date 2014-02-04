@@ -5,7 +5,7 @@
 package main
 
 import (
-	"code.google.com/p/biogo.kdtree"
+	"code.google.com/p/biogo.store/kdtree"
 
 	"fmt"
 	"math"

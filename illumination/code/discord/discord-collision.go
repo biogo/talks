@@ -7,7 +7,7 @@ package main
 import (
 	"code.google.com/p/biogo.boom"
 	"code.google.com/p/biogo.illumina"
-	"code.google.com/p/biogo.kdtree"
+	"code.google.com/p/biogo.store/kdtree"
 	"fmt"
 	"math"
 	"os"
