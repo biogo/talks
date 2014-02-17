@@ -1,0 +1,128 @@
+Using and extending types in bíogo
+
+R. Daniel Kortschak and David L. Adelson
+
+
+* Fundamental bíogo types
+
+Two of the most important types in the bíogo toolkit are `seq.Sequence` and `feat.Feature`.
+
+	type Feature interface {
+	    Range
+	    Name() string
+	    Description() string
+	    Location() Feature
+	}
+
+	type Range interface {
+	    Start() int
+	    End() int
+	    Len() int
+	}
+
+and
+
+	type Sequence interface {
+	    Feature
+	    At(int) alphabet.QLetter         // Return the letter at a specific position.
+	    Set(int, alphabet.QLetter) error // Set the letter at a specific position.
+	    Alphabet() alphabet.Alphabet     // Return the Alphabet being used.
+
+	    // omitted methods....
+	}
+
+Here we see that a Sequence is also a Feature since the Sequence interface includes the Feature interface in its definition.
+
+This unification of sequence and feature data allows interesting composition of sequence data types.
+
+* Storing contigs as sequences
+
+In the `biogo.examples` repository there is an example package that shows how a collection of contigs can be aggregated into a single sequence in a space efficient way (at a cost to processing time).
+
+`biogo.example/contig` stores a collection of sequences in a step vector such that the step vector satisfies the `seq.Sequence` interface.
+
+.code code/contig.go /package main/,
+
+Output:
+
+	>super contig
+	nnAGTCnnnn
+	nnnnnACGT
+
+	>super contig
+	ACGTnnnnnn
+	nnnGACTnn
+
+While this example package does not handle resolving redundantly represented sequences, that is trivial to add either by preprocessing to generate non-overlapping consensus sequences or alternatively by using the interval tree store provided `biogo.interval` to allow post-retrieval analysis of the preferred or consensus base.
+
+
+* Hooking sequence parsing
+
+Since the fundamental types are defined as interfaces there is the promotion of the idea that interaction with these objects is via calls rather than direct access. This allows methods to be placed such that they intercept calls by controlling routines.
+
+The process of parsing sequence files with the provided `biogo/io/seqio` packages involves calling the `SetDescription()` method of sequence values created by the sequence parser.
+
+.code code/fasta_header.go
+
+This call can be handled by a modified method to allow specific information to be parsed out and used to populate the fields of the sequence type as is done in the example package `biogo.examples/ucsc` which parses UCSC formatted FASTA description lines to create sequences.
+
+.code code/ucsc/ucsc/ucsc.go /^\/\/ Seq/,
+
+The following example shows how this can be used.
+
+.code code/ucsc/ucsc.go /package main/,
+
+Output:
+
+	Chr:    chr18	Strand: +
+	Start:   78015999
+	End:     78016181
+	Len:          182
+
+	>hg19_dna range=chr18:78016000-78016181 5'pad=0 3'pad=0 strand=+ repeatMasking=none
+	AGAGGGAGGATTATTATAATATTGGAATAAAGAGTAATTGCTATCAACTAATGATTAATG
+	ATATTCATATATAATCATGTCTAAGATCTATATCTGGTATAACTATTCTTGTTTTATATT
+	TTATTGGAGTGGAACAGCTCATGTCCTCGGTCTCTTGCCTCGGCAAAGATTAGATTAGGG
+	TT
+
+	Chr:    chr18	Strand: +
+	Start:   78015994
+	End:     78016181
+	Len:          187
+
+	>hg19_dna range=chr18:78015995-78016181 5'pad=5 3'pad=0 strand=+ repeatMasking=none
+	ATTATAGAGGGAGGATTATTATAATATTGGAATAAAGAGTAATTGCTATCAACTAATGAT
+	TAATGATATTCATATATAATCATGTCTAAGATCTATATCTGGTATAACTATTCTTGTTTT
+	ATATTTTATTGGAGTGGAACAGCTCATGTCCTCGGTCTCTTGCCTCGGCAAAGATTAGAT
+	TAGGGTT
+
+	Chr:    chr18	Strand: -
+	Start:   78015999
+	End:     78016181
+	Len:          182
+
+	>hg19_dna range=chr18:78016000-78016181 5'pad=0 3'pad=0 strand=- repeatMasking=none
+	AACCCTAATCTAATCTTTGCCGAGGCAAGAGACCGAGGACATGAGCTGTTCCACTCCAAT
+	AAAATATAAAACAAGAATAGTTATACCAGATATAGATCTTAGACATGATTATATATGAAT
+	ATCATTAATCATTAGTTGATAGCAATTACTCTTTATTCCAATATTATAATAATCCTCCCT
+	CT
+
+	Chr:    chr18	Strand: -
+	Start:   78015999
+	End:     78016186
+	Len:          187
+
+	>hg19_dna range=chr18:78016000-78016186 5'pad=5 3'pad=0 strand=- repeatMasking=none
+	CACCTAACCCTAATCTAATCTTTGCCGAGGCAAGAGACCGAGGACATGAGCTGTTCCACT
+	CCAATAAAATATAAAACAAGAATAGTTATACCAGATATAGATCTTAGACATGATTATATA
+	TGAATATCATTAATCATTAGTTGATAGCAATTACTCTTTATTCCAATATTATAATAATCC
+	TCCCTCT
+
+
+* Source — contig
+
+.code code/contig/contig.go
+
+* Source — ucsc
+
+.code code/ucsc/ucsc/ucsc.go
