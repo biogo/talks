@@ -70,6 +70,8 @@ type illuminaRecord struct {
 	illumina.Metadata
 }
 
+// illuminaRecord} OMIT
+
 // store is a string internment implementation.
 type store map[string]string
 
@@ -126,6 +128,7 @@ func overlap(a, b *illuminaRecord, at int) bool {
 // satisfy the kdtree.Comparable interface. The dimensions are:
 //  0 = X
 //  1 = Y
+// {illuminaRecord methods OMIT
 func (p *illuminaRecord) Compare(c kdtree.Comparable, d kdtree.Dim) float64 {
 	q := c.(*illuminaRecord)
 	switch d {
@@ -145,14 +148,20 @@ func (p *illuminaRecord) Distance(c kdtree.Comparable) float64 {
 	return x*x + y*y
 }
 
+// illuminaRecord methods} OMIT
+
 // illuminaRecords is a collection of the illuminaRecord type that satisfies kdtree.Interface.
 // This type is implemented to improve performance of queries in the second pass.
 type illuminaRecords []*illuminaRecord
 
-func (p illuminaRecords) Index(i int) kdtree.Comparable         { return p[i] }
-func (p illuminaRecords) Len() int                              { return len(p) }
-func (p illuminaRecords) Pivot(d kdtree.Dim) int                { return plane{illuminaRecords: p, Dim: d}.Pivot() }
+func (p illuminaRecords) Index(i int) kdtree.Comparable { return p[i] }
+func (p illuminaRecords) Len() int                      { return len(p) }
+func (p illuminaRecords) Pivot(d kdtree.Dim) int {
+	return plane{illuminaRecords: p, Dim: d}.Pivot()
+}
 func (p illuminaRecords) Slice(start, end int) kdtree.Interface { return p[start:end] }
+
+// illuminaRecords} OMIT
 
 // plane is required to help illuminaRecords.
 type plane struct {
@@ -178,6 +187,8 @@ func (p plane) Slice(start, end int) kdtree.SortSlicer {
 func (p plane) Swap(i, j int) {
 	p.illuminaRecords[i], p.illuminaRecords[j] = p.illuminaRecords[j], p.illuminaRecords[i]
 }
+
+// plane} OMIT
 
 // buildTrees takes a map of illuminaRecords and returns a map of kdtrees, both keyed on
 // tileAddress. Tree construction for each of the map elements is performed concurrently,

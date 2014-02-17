@@ -1,0 +1,408 @@
+Analysis of Illumina sequencing data using bíogo
+
+R. Daniel Kortschak and David L. Adelson
+
+
+* Examining discordant read pairs for Structural Variant detection
+
+How often does a discordant pair arise due to the sequencing technology as opposed to the underlying biology?
+
+
+* Background: Illumina sequencing technology
+
+Prepare fragments, bind to substrate and bridge.
+
+.image images/ilmn-step1-3.jpg
+
+Form 'polonies' of amplified DNA.
+
+.image images/ilmn-step3-6.jpg
+
+Perform step-wise polymer extension - detection by fluorescence.
+
+.image images/ilmn-step7-9.jpg
+
+Image processing and sequence generation.
+
+.image images/ilmn-step10-12.jpg
+
+    Illumina 2007
+
+* Explaining discordant pairs by polony collision?
+
+The approach is trivially described:
+
+.code code/type-reads.alg
+
+.code code/complete.alg
+
+However, the implementation may tax the platform given the sizes of data sets to investigate.
+
+
+* Implementation
+
+The following text and code shows how the algorithm above can be implemented using packages and tools provided by the bíogo toolkit, explaining some of the features of the Go language in passing.
+
+
+* Reading the data
+
+bíogo.boom provides types and methods for interacting with BAM and SAM data.
+
+	// Package boom is a wrapper for the samtools bam library.
+
+.code code/boom.go /func main/,/^}/
+
+Output:
+
+	[gi|166362741|ref|NC_010296.1|]
+	15_1223_1535_F3 ------------ 0:1886812..1886851 255 [39M] -1:-1 39 TGTCGTCAGCTCGTGTCGTGAGATGTTGGGTTAAGTCCC [58 43 45 59  [truncated]
+	9_1353_1510_F3 ------------ 0:1886821..1886860 255 [39M] -1:-1 39 CTCGTGTCGTGAGATGTTGGGTTAAGTCCCGCAACGAGC [65 55 56 66 6 [truncated]
+	8_1759_1452_F3 ------------ 0:1886822..1886861 255 [39M] -1:-1 39 TCGTGTCGTGAGATGTTGGGTTAAGTCCCGCAACGAGCG [53 53 65 64 6 [truncated]
+	13_1887_440_F3 ------------ 0:1886822..1886861 255 [39M] -1:-1 39 TCGTGTCGTGAGATGTTGGGTTAAGTCCCGCAACGAGCG [54 49 31 31 5 [truncated]
+	15_1840_541_F3 ------------ 0:1886822..1886861 255 [39M] -1:-1 39 TCGTGTCGTGAGATGTTGGGTTAAGTCCCGCAACGAGCG [32 40 44 38 5 [truncated]
+	15_472_1813_F3 ------------ 0:1886826..1886865 255 [39M] -1:-1 39 GTCGTGAGATGTTGGGTTAAGTCCCGCAACGAGCGCAAC [44 45 56 57 6 [truncated]
+	11_1273_1996_F3 ------------ 0:1886827..1886866 255 [39M] -1:-1 39 TCGTGAGATGTTGGGTTAAGTCCCGCAACGAGCGCAACC [51 46 60 65  [truncated]
+
+
+* Retrieving the spatial data from a read
+
+`biogo.illumina` provides a simple method to extract Illumina metadata from read identifier strings.
+
+	// Package illumina provides support for handling Illumina read metadata.
+
+.code code/illumina.go /func main/,/^}/
+
+Output:
+
+	(illumina.Metadata) {
+	 Type: (illumina.Type) pre-casava,
+	 Instrument: (string) "HWUSI-EAS100R",
+	 Run: (int) -1,
+	 FlowCell: (string) "",
+	 Lane: (int8) 6,
+	 Tile: (int) 73,
+	 Coordinate: (illumina.Coordinate) {
+	  X: (int) 941,
+	  Y: (int) 1973
+	 },
+	 Mate: (int8) 1,
+	 BadRead: (bool) false,
+	 ControlBits: (int) 0,
+	 Multiplex: (illumina.Multiplex) {
+	  Index: (int8) -1,
+	  Tag: (string) "ATCACG"
+	 }
+	}
+	(illumina.Metadata) {
+	 Type: (illumina.Type) casava,
+	 Instrument: (string) "EAS139",
+	 Run: (int) 136,
+	 FlowCell: (string) "FC706VJ",
+	 Lane: (int8) 2,
+	 Tile: (int) 2104,
+	 Coordinate: (illumina.Coordinate) {
+	  X: (int) 15343,
+	  Y: (int) 197393
+	 },
+	 Mate: (int8) 1,
+	 BadRead: (bool) true,
+	 ControlBits: (int) 18,
+	 Multiplex: (illumina.Multiplex) {
+	  Index: (int8) -1,
+	  Tag: (string) "ATCACG"
+	 }
+	}
+
+
+
+* A spatial store: k-d tree
+
+.code code/complete.alg /spatial/
+
+bíogo provides an implementation of a spatial store using a k-d tree.
+
+	// Package kdtree implements a k-d tree.
+
+This example shows how this package can be used.
+
+.code code/kdtree.go /package main/,
+
+Output:
+
+	[9 6] is closest point to [8 7], d=1.414214
+
+
+* Using interface types to extend functionality
+
+Go makes extensive use of structural duck-like typing. In many cases functions and methods can take types which are defined as interfaces only, _e.g._ the `kdtree.(*Tree).Nearest()` method used above takes a `Comparable` as the parameter. From the `kdtree` package...
+
+	// A Comparable is the element interface for values stored in a k-d tree.
+	type Comparable interface {
+		// Compare returns the shortest translation of the plane through b with
+		// normal vector along dimension d to the parallel plane through a.
+		//
+		// Given c = a.Compare(b, d):
+		//  c = a_d - b_d
+		//
+		Compare(Comparable, Dim) float64
+
+		// Dims returns the number of dimensions described in the Comparable.
+		Dims() int
+
+		// Distance returns the squared Euclidian distance between the receiver and
+		// the parameter.
+		Distance(Comparable) float64
+	}
+
+This definition means that any type that has these methods defined thus satisfying the interface will be usable where this type is specified. The `kdtree.Point` type satisfies this interface, but because Go uses a duck-like typing system, we can make our own.
+
+* Implementing a kdtree.Comparable
+
+Adding methods to a type can be achieved by including the type in a struct as shown for `illumina.Metadata` below, and then defining methods on the new struct.
+
+.code code/all/all-collision.go /type illuminaRecord/,/illuminaRecord}/
+.code code/all/all-collision.go /{illuminaRecord methods/,/illuminaRecord methods}/
+
+There are two ways the type can be included: either embedded without a name as is the case here or with a name as is shown for fields `A` and `B`. In the first case, the methods and fields of the embedded type are promoted such that they behave as fields and methods of the new type.
+
+* k-d tree performance is sensitive to input order
+
+Balanced trees perform better. This requires identification of the median points.
+
+The kdtree package allows you to do this...
+
+	type Interface interface {
+		// Index returns the ith element of the list of points.
+		Index(i int) Comparable
+
+		// Len returns the length of the list.
+		Len() int
+
+		// Pivot partitions the list based on the dimension specified.
+		Pivot(Dim) int
+
+		// Slice returns a slice of the list.
+		Slice(start, end int) Interface
+	}
+
+The `kdtree.Points` type satisfied this interface, and again we can make our own.
+
+* Implement a type that satisfies kdtree.Interface
+
+Using this type, we can construct a close to optimal tree with the `kdtree.New` function.
+
+	// New returns a k-d tree constructed from the values in p.
+	func New(p Interface, bounding bool) *Tree
+
+We want a slice of illumina records that can determine the median for each dimension.
+
+.code code/all/all-collision.go /type illuminaRecords/,/illuminaRecords}/
+
+But, you can see `Pivot` depends on another type, `plane`, to allow the pivot to be performed with respect to a specific dimension. This is defined with reference to helpers provided by the kdtree package, here using `kdtree.MedianOfRandoms` as the pivot function.
+
+.code code/all/all-collision.go /type plane/,/plane}/
+
+These types `illuminaRecord`, `illuminaRecords` and `plane` provide us with all the behaviours required to spatially store polony information.
+
+However, we need to consider that polony addresses are more complicated than just an x, y-coordinate pair. They also include information that essentially segregates them into separate spaces:
+
+- Flow cell
+- Lane
+- Tile
+
+To avoid collisions between coordinates in different spaces. Defining a type `tileAdress` that includes this information allows us to use the Go built-in map type which can be keyed on any type which is comparable (this is defined in the language specification with a small set of rules).
+
+.code code/all/all-collision.go /type tileAddress/,/^}/
+
+So now we can keep a collection of illuminaRecords with a look up table based on these values:
+
+	meta := make(map[tileAddress]illuminaRecords)
+
+* Collecting the read data
+
+First we bundle up all the relevant read information into an `illuminaRecord`:
+
+.code code/all/all-collision.go  /func newRecord/,/^}/
+
+And then add the record to the relevant collection.
+
+	const (
+		filterReq  = 0
+		filterMask = boom.Unmapped | boom.MateUnmapped | boom.Secondary | boom.Duplicate |
+					 boom.ProperPair | filterReq
+	)
+
+	if r[0].Flags()&filterMask == filterReq && r[1].Flags()&filterMask == filterReq {
+		discordant++
+		m, err := newRecord(r, names)
+		if err != nil {
+			panic(err)
+		}
+
+		ta := tileAddress{
+			FlowCell: m.FlowCell,
+			Lane:     m.Lane,
+			Tile:     m.Tile,
+		}
+		meta[ta] = append(meta[ta], m)
+	}
+
+
+* Memory load — Intern strings
+
+Reduce weight of redundantly coded string data.
+
+	type Metadata struct {
+		Type        Type
+		Instrument  string     // Unique instrument name.
+		Run         int        // Run id, -1 if not valid.
+		FlowCell    string     // Flowcell id.
+		Lane        int8       // Flowcell lane.
+		Tile        int        // Tile number within the flowcell lane.
+		Coordinate  Coordinate // Coordinate of the cluster within the tile.
+		Mate        int8       // Member of a pair, 1 or 2 for paired reads.
+		BadRead     bool       // Read failed filter.
+		ControlBits int        // 0 when none of the control bits are on, otherwise it is an even number, -1 if not valid.
+		Multiplex   Multiplex  // Multiplexing information.
+	}
+
+	type Multiplex struct {
+		Index int8   // Index is -1 if not valid.
+		Tag   string // Tag is empty if not valid.
+	}
+
+The majority of types are simple fields within the Metadata struct, but strings are heap allocated objects and each string read by the BAM file reader is newly allocated, so they will result in a large allocation of memory for the complete set of data.
+
+However, the string values for the data set form a small set of unique values. The Go runtime doesn't help here, but we can define a helper type to store all the strings we've seen.
+
+.code code/all/all-collision.go /type store/
+
+Convert a string to the representation we first saw. The garbage collector will clean up the redundant copies.
+
+.code code/all/all-collision.go /func \(is store\) intern/,/^}/
+
+
+* Construct the trees
+
+Once we have all the separate tiles aggregated as `illuminaRecords` collections, we can construct each tree based on the set of records.
+
+The function buildTrees takes a map of illuminaRecords and returns a map of kdtrees, both keyed on tileAddress.
+
+.code code/all/all-collision.go /^func buildTrees/,/\t}$/
+
+Tree construction for each of the map elements is performed concurrently using the `go` keyword, allowing this part of the analysis to be performed in parallel. Each illuminaRecords slice is build and the resulting tree is sent on a channel for synchronisation.
+
+.code code/all/all-collision.go /^\tr :=/,/close\(r\)/
+
+A loop then collates each of the trees into a map keyed on its tileAddress and this is returned.
+
+.code code/all/all-collision.go /^\tts :=/,/^}/
+
+
+* Find collisions
+
+A valid query will match itself so we need to keep both the closest and second closest points in the tree.
+
+The kdtree package helps here by prividing a type that will keep a defined number of nearest hits.
+
+	nk := kdtree.NewNKeeper(2)
+
+Now we can store the two closest polonies and only consider the second.
+
+	t, ok := ts[tileAddress{ // Get the relevant tree.
+		FlowCell: q.FlowCell,
+		Lane:     q.Lane,
+		Tile:     q.Tile,
+	}]
+	if !ok { // We didn't have one, so there is no closest polony.
+		continue
+	}
+	t.NearestSet(nk, q)
+	if nk.Heap[0].Comparable == nil {
+		panic("internal inconsistency: failed to find nearest")
+	}
+	if nk.Heap[1].Comparable == nil {
+		// The second ComparableDist is the infinite distance marker,
+		// so there was only one spot on the tile! We are it.
+		continue
+	}
+	nm := nk.Heap[1].Comparable.(*illuminaRecord)
+	d := nk.Heap[1].Dist
+
+	// Reset the keeper for the next query.
+	nk.Heap = nk.Heap[:1]
+	nk.Heap[0].Comparable = nil
+	nk.Heap[0].Dist = inf
+
+	if nm.Metadata == q.Metadata { // We only stored discordant, only queried concordant.
+		panic("internal inconsistency: discordant pair is concordant pair‽")
+	}
+	if overlap(q, nm, offset) {
+		coincident++
+		fmt.Fprintf(os.Stderr, "@%d %0.fnm %+v -- %+v\n", offset, math.Sqrt(d), q, nm)
+	}
+
+
+* Output results
+
+Output format for later analysis:
+
+	fmt.Printf("# %s\t%s\t%d\t%d\t%f\n",
+		os.Args[1], readType, total, discordant, float64(discordant)/float64(total),
+	)
+	for i, off := range offsets {
+		fmt.Printf("%s\t%s\t%s\t%d\t%f\n",
+			os.Args[1], readType, off.label,
+			coincident[i], float64(coincident[i])/float64(discordant),
+		)
+	}
+
+
+* Summary — Operation
+
+Can perform analysis on BAM files with >100 million read pairs in reasonable time.
+
+All-mapped pair analysis requires ~50GB for 100 million pairs.
+
+
+* Results — mapping frequencies
+
+All the following analyses are available in full from http://code.google.com/p/biogo/source/browse/?repo=talks#git%2Fillumination%2Fcode and http://code.google.com/p/biogo/source/browse/?repo=talks#git%2Fillumination%2Fresults.
+
+.image images/mapping.png
+
+* Results — collision analysis
+
+.image images/collision.png
+
+* Single sequencing experiment (91 tiles)
+
+.image images/G-dist.png
+
+.image images/G-neighbours-by-tile.png
+
+.image images/G-neighbours-by-class.png
+
+
+* Multiple sequencing experiments (876 tiles)
+
+.image images/all-dist.png
+
+.image images/all-neighbours-by-tile.png
+
+.image images/all-neighbours-by-class.png
+
+
+* Interpretation
+
+The elevation of collisions in the concordant class appears mainly due to nearly identical pairs.
+
+- These are probably optical duplicates that are missed by our deduplication protocol which is based on perfect end matching (a translation of the picard algorithm).
+
+The mechanism for generation of discordant pairs by collision is not yet clear.
+
+These effects are low frequency, so largely not important — possibly significant for people looking at low frequency structural variation events though.
+
+* Source code
+
+.code code/all/all-collision.go
