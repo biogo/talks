@@ -43,7 +43,7 @@ Additionally, we are interested in _de_novo_ repeat discovery, classification an
 
 * Retrotransposable elements
 
-Retrotransposable elements (RTEs) are a class of mobile repetitive elements that transpose via a cut and paste reverse-transcriptase-dependent mechanism.
+Retrotransposable elements (RTEs) are a class of mobile repetitive elements that transpose via a copy-and-paste reverse-transcriptase-dependent mechanism.
 
 .image images/retrotransposition.png 400 640
 
