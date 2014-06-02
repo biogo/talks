@@ -198,8 +198,8 @@ My native languages (perl/python) were not fast enough for the problem.
 
 I was looking for a performant language that facilitated:
 
-- ease of coding 
-- checking for correctness in development and particularly in peer review 
+- ease of coding
+- checking for correctness in development and particularly in peer review
 - with an already existing bioinformatics library
 
 * The Go programming language: 2 out of 3
@@ -214,7 +214,7 @@ It is the first, but feels like the second.
 
 Design principles (according to one of the lead developers):
 
-	Simple      concepts are easy to understand 
+	Simple      concepts are easy to understand
 
 	Orthogonal  concepts mix cleanly, easy to understand and predict what happens
 
@@ -243,7 +243,7 @@ None exists in Go, though people are using it for this kind of work.
 
 Since I'm writing a set of tools that interact with sequence and interval data I may as well make the components reusable.
 
-* bíogo 
+* bíogo
 
 Plan to develop a light-weight high-performance library for prototyping new tools:
 
