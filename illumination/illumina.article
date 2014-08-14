@@ -290,7 +290,7 @@ The function buildTrees takes a map of illuminaRecords and returns a map of kdtr
 
 .code code/all/all-collision.go /^func buildTrees/,/\t}$/
 
-Tree construction for each of the map elements is performed concurrently using the `go` keyword, allowing this part of the analysis to be performed in parallel. Each illuminaRecords slice is build and the resulting tree is sent on a channel for synchronisation.
+Tree construction for each of the map elements is performed concurrently using the `go` keyword, allowing this part of the analysis to be performed in parallel. Each illuminaRecords slice is built and the resulting tree is sent on a channel for synchronisation.
 
 .code code/all/all-collision.go /^\tr :=/,/close\(r\)/
 
