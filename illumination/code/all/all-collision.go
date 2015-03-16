@@ -5,9 +5,9 @@
 package main
 
 import (
-	"code.google.com/p/biogo.boom"
-	"code.google.com/p/biogo.illumina"
-	"code.google.com/p/biogo.store/kdtree"
+	"github.com/biogo/boom"
+	"github.com/biogo/illumina"
+	"github.com/biogo/store/kdtree"
 	"fmt"
 	"math"
 	"os"

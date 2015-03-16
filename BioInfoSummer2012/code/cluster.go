@@ -5,9 +5,10 @@
 package main
 
 import (
-	"code.google.com/p/biogo.cluster/kmeans" // @090d6
 	"fmt"
 	"strings"
+
+	"github.com/biogo/cluster/kmeans" // @090d6
 )
 
 const scaling = 30

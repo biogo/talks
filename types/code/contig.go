@@ -5,14 +5,14 @@
 package main
 
 import (
-	"code.google.com/p/biogo.examples/contig"
-
-	"code.google.com/p/biogo/alphabet"
-	"code.google.com/p/biogo/seq"
-	"code.google.com/p/biogo/seq/linear"
-
 	"fmt"
 	"os"
+
+	"github.com/biogo/biogo/alphabet"
+	"github.com/biogo/biogo/seq"
+	"github.com/biogo/biogo/seq/linear"
+
+	"github.com/biogo/examples/contig"
 )
 
 type offsetSeq struct {

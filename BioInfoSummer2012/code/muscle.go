@@ -6,9 +6,10 @@ package main
 
 import (
 	"bytes"
-	"code.google.com/p/biogo.external/muscle"
 	"fmt"
 	"strings"
+
+	"github.com/biogo/external/muscle"
 )
 
 var s = `>71.2259 lcl|scaffold_41:8288143+

@@ -5,12 +5,12 @@
 package bioinfosummer2012
 
 import (
-	_ "code.google.com/p/biogo.cluster"
-	_ "code.google.com/p/biogo.cluster/kmeans"
-	_ "code.google.com/p/biogo.external/muscle"
-	_ "code.google.com/p/biogo/alphabet"
-	_ "code.google.com/p/biogo/io/seqio/fasta"
-	_ "code.google.com/p/biogo/seq"
-	_ "code.google.com/p/biogo/seq/linear"
-	_ "code.google.com/p/biogo/seq/multi"
+	_ "github.com/biogo/biogo/alphabet"
+	_ "github.com/biogo/biogo/io/seqio/fasta"
+	_ "github.com/biogo/biogo/seq"
+	_ "github.com/biogo/biogo/seq/linear"
+	_ "github.com/biogo/biogo/seq/multi"
+	_ "github.com/biogo/cluster"
+	_ "github.com/biogo/cluster/kmeans"
+	_ "github.com/biogo/external/muscle"
 )

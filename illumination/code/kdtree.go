@@ -2,13 +2,15 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//+build ignore
+
 package main
 
 import (
-	"code.google.com/p/biogo.store/kdtree"
-
 	"fmt"
 	"math"
+
+	"github.com/biogo/store/kdtree"
 )
 
 var wpData = kdtree.Points{{2, 3}, {5, 4}, {9, 6}, {4, 7}, {8, 1}, {7, 2}}
