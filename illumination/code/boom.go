@@ -1,14 +1,14 @@
-// Copyright ©2013 The bíogo.talks Authors. All rights reserved.
+// Copyright ©2013 The bíogo Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 package main
 
 import (
-	"github.com/biogo/boom"
-
 	"fmt"
 	"os"
+
+	"github.com/biogo/boom"
 )
 
 var sampleBam = []byte{
